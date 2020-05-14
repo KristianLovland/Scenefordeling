@@ -13,10 +13,15 @@ import pandas as pd
 filename = "mulige_roller.csv"
 data = pd.read_csv(filename, sep=";")
 scenes = data.iloc[:, 0]
+roles = data.iloc[:, 1]
 scene_indices = [index for index, scene in enumerate(scenes.notnull()) if scene]
 print(f"Indekser som inneholder en ny scene: {scene_indices}")
-
-
+print(f"Alle roller: {roles}")
+# Stygg hack for å håndtere at pandas tolker skuespillernavn som kolonnenavn og ikke data
+(m, n) = data.shape
+n -= 2
+actors = data.columns[2:n+2].values
+print(f"Actors: {actors}")
 
 # Dette er litt av et stjernelag
 skuespillere = ['Kriss', 'Eskil', 'Erling'];
