@@ -1,34 +1,35 @@
+# Her er en løsning på det klassiske "vi har øvelse i morgen men vi har fortsatt ikke fordelt
+# roller, så nå må vi sitte oppe hele kvelden for å få alt til å gå opp"-problemet
+# alle som har holdt på med revy kjenner til.
+
+# TODO: Renskriv koden, den er fullstendig uleselig. Beklager til alle som måtte
+#       kikke på det her. Jeg lover bot og bedring.
+
+
 from pulp import *
 import numpy as np
 import pandas as pd
 
-# TODO: Renskriv koden, den er fullstendig uleselig
-# TODO: Importer data fra csv-fil
 
-# Importer data fra csv-fil
+# Importer data fra excel-fil
 # Antar at fila har sketsjnavn i venstre kolonne, tilhørende roller i kolonna til
 # høyre for denne, og om en person kan spille denne rollen i hver kolonne til høyre
 # for disse igjen. Sjekk fila for eksempel
 
-filename = "mulige_roller.csv"
-data = pd.read_csv(filename, sep=";")
+filename = "mulige_roller.xlsx"
+data = pd.read_excel(filename)
 scenes = data.iloc[:, 0]
 roles = data.iloc[:, 1]
 scene_start_indices = [index for index, scene in enumerate(scenes.notnull()) if scene]
-# print(f"Indekser som inneholder en ny scene: {scene_start_indices}")
-# print(f"Alle roller: {roles}")
-# Stygg hack for å håndtere at pandas tolker skuespillernavn som kolonnenavn og ikke data
+
 (m, n) = data.shape
 n -= 2
 actors = data.columns[2:n+2].values
-# print(f"Actors: {actors}")
 
-# Finn ut hvem som kan spille hvilke roller
 possible_actors = {}
 for i in range(0, m):
     possible_actor_indices = data.iloc[i, 2:] == 1
     possible_actors[roles[i]] = actors[possible_actor_indices]
-# print(f"Mulige skuespillere: {possible_actors}")
 
 scenes = scenes.dropna().tolist()
 t = len(scenes)
@@ -37,8 +38,8 @@ scene_indices = {}
 for s in range(0, t-1):
     scene_indices[scenes[s]] = range(scene_start_indices[s], scene_start_indices[s+1])
 scene_indices[scenes[t-1]] = range(scene_start_indices[t-1], m)
-# print(f"Sceneindekser: {scene_indices}")
 
+# TODO: Vær konsekvent på språk, velg bedre variabelnavn
 skuespillere = actors
 roller = roles
 mulige_roller = possible_actors 
@@ -107,7 +108,7 @@ for s in range(0, t):
      endelige_scener.append(scener[s])
 
 print()
-print(f"Ferdig med rollefordeling. Har funnet roller til {objective_value} skuespillere")
+print(f"Ferdig med rollefordeling. Har funnet roller til {objective_value} skuespillere.")
 print()
 
 for scene in endelige_scener:
