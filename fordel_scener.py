@@ -14,14 +14,34 @@ filename = "mulige_roller.csv"
 data = pd.read_csv(filename, sep=";")
 scenes = data.iloc[:, 0]
 roles = data.iloc[:, 1]
-scene_indices = [index for index, scene in enumerate(scenes.notnull()) if scene]
-print(f"Indekser som inneholder en ny scene: {scene_indices}")
-print(f"Alle roller: {roles}")
+scene_start_indices = [index for index, scene in enumerate(scenes.notnull()) if scene]
+# print(f"Indekser som inneholder en ny scene: {scene_start_indices}")
+# print(f"Alle roller: {roles}")
 # Stygg hack for å håndtere at pandas tolker skuespillernavn som kolonnenavn og ikke data
 (m, n) = data.shape
 n -= 2
 actors = data.columns[2:n+2].values
-print(f"Actors: {actors}")
+# print(f"Actors: {actors}")
+
+# Finn ut hvem som kan spille hvilke roller
+possible_actors = {}
+for i in range(0, m):
+    possible_actor_indices = data.iloc[i, 2:] == 1
+    possible_actors[roles[i]] = actors[possible_actor_indices]
+# print(f"Mulige skuespillere: {possible_actors}")
+
+scenes = scenes.dropna().tolist()
+t = len(scenes)
+# Hold oversikten over hvor de ulike scenen starter og slutter
+scene_indices = {}
+for s in range(0, t-1):
+    scene_indices[scenes[s]] = range(scene_start_indices[s], scene_start_indices[s+1])
+scene_indices[scenes[t-1]] = range(scene_start_indices[t-1], m)
+# print(f"Sceneindekser: {scene_indices}")
+
+#skuespillere = actors
+#roller = roles
+#mulige_roller = possible_actors 
 
 # Dette er litt av et stjernelag
 skuespillere = ['Kriss', 'Eskil', 'Erling'];
