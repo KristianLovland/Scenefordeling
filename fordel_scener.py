@@ -45,16 +45,6 @@ mulige_roller = possible_actors
 scener = scenes
 scener_indekser = scene_indices
 
-# Dette er litt av et stjernelag
-# skuespillere = ['Kriss', 'Eskil', 'Erling'];
-# roller = ['Gutt', 'Pirat', 'Hai', 'Bestefar', 'Nesoddengutt']
-# Jobber med to sketsjer
-#mulige_roller = {'Gutt': ['Kriss', 'Erling'], 'Pirat': ['Eskil'], 'Hai': ['Eskil', 'Erling'], 'Bestefar': ['Eskil', 'Erling'], 'Nesoddengutt': ['Kriss', 'Eskil']}
-# mulige_roller = {'Gutt': ['Kriss', 'Erling'], 'Pirat': ['Eskil'], 'Hai': ['Eskil', 'Erling'], 'Bestefar': ['Eskil', 'Erling'], 'Nesoddengutt': ['Kriss', 'Eskil'], 'Lærer': ['Kriss', 'Eskil', 'Erling']}
-
-# Gutt og pirat er med i første sketsj, bestefar og Nesoddengutt er med i andre sketsj
-# scener = ['Hav til besvær', 'Ferja']
-# scener_indekser = {'Hav til besvær': [0, 1, 2], 'Ferja': [3, 4]}
 scene_storleik = [len(scener_indekser[scener[i]]) for i in range(0, len(scener))]
 
 # m er antall roller til sammen, n er antall skuespillere, t er antall scener
@@ -100,6 +90,8 @@ for i in range(0, m):
 
 prob.solve()
 
+objective_value = int(value(prob.objective))
+
 # Print resultatene
 
 endelige_roller = {}
@@ -114,9 +106,15 @@ for s in range(0, t):
     if scene_med[s].varValue == 1:
      endelige_scener.append(scener[s])
 
-
-for rolle in endelige_roller:
-    print(f"{endelige_roller[rolle]} spilles av {rolle}")
+print()
+print(f"Ferdig med rollefordeling. Har funnet roller til {objective_value} skuespillere")
+print()
 
 for scene in endelige_scener:
     print(f"Scenen {scene} er med")
+
+print()
+for rolle in endelige_roller:
+    print(f"{endelige_roller[rolle]} spilles av {rolle}")
+print()
+
