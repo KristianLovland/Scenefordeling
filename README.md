@@ -1,4 +1,7 @@
 # Fordeling av sketsjer til en gitt gruppe skuespillere
+Etter en idé jeg hadde, men aldri gjennomførte da vi lagde forrige Omegarevy.
+
+## Hva er dette for noe?
 Dette scriptet leser inn et excelark som inneholder informasjon om hva slags sketsjer man ønsker å øve på, hvilke roller hver av disse sketsjene har, og hvilke skuespillere som kan passe til å spille hvilke roller. Dette oppgis i en tabell på følgende form (der Ri er rolle 1 og Pj er person j).
 
 |           |           |  Person 1     | Person 2      | ... | Person n      |
