@@ -1,126 +1,111 @@
-# Her er en løsning på det klassiske "vi har øvelse i morgen men vi har fortsatt ikke fordelt
-# roller, så nå må vi sitte oppe hele kvelden for å få alt til å gå opp"-problemet
-# alle som har holdt på med revy kjenner til.
-
-# TODO: Renskriv koden, den er fullstendig uleselig. Beklager til alle som måtte
-#       kikke på det her. Jeg lover bot og bedring.
-
 import argparse
-from pulp import *
+from pulp import LpProblem, LpVariable, LpBinary, LpMaximize, lpSum, value
 import pandas as pd
 
-# Les argumenter scriptet er kalt med
-parser = argparse.ArgumentParser(description='Fordel roller på skuespillere')
-parser.add_argument('--filnavn', default='mulige_roller.xlsx',
-                            help='Navn på fil som inneholder mulige roller')
+
+## Parse input arguments 
+parser = argparse.ArgumentParser(description='Assign roles to actors')
+parser.add_argument('--filename', default='mulige_roller.xlsx',
+                            help='Name of file containing possible roles')
 args = parser.parse_args()
-filename = args.filnavn
+filename = args.filename
 
-# Importer data fra excel-fil
-# Antar at fila har sketsjnavn i venstre kolonne, tilhørende roller i kolonna til
-# høyre for denne, og om en person kan spille denne rollen i hver kolonne til høyre
-# for disse igjen. Sjekk fila for eksempel
 
+## Import data from excel-file, assume it is structured as specified in README
 filename = "mulige_roller.xlsx"
 data = pd.read_excel(filename)
 scenes = data.iloc[:, 0]
 roles = data.iloc[:, 1]
 scene_start_indices = [index for index, scene in enumerate(scenes.notnull()) if scene]
 
+# Use m, n and t as compact notation for number of roles, actors and scenes, respectively
+# Some ugly hacks, but nothing breaks down as long as the structure is as specified
 (m, n) = data.shape
 n -= 2
 actors = data.columns[2:n+2].values
+scenes = scenes.dropna().tolist()
+t = len(scenes)
 
+
+## Build python dictionaries from pandas dataframes
+# Dictionary: Key = Role, Value = All actors that may play the role
 possible_actors = {}
 for i in range(0, m):
     possible_actor_indices = data.iloc[i, 2:] == 1
     possible_actors[roles[i]] = actors[possible_actor_indices]
 
-scenes = scenes.dropna().tolist()
-t = len(scenes)
-# Hold oversikten over hvor de ulike scenen starter og slutter
+# Dictionary: Key = Scene, Value = Coliumn indices of all roles in the scene 
 scene_indices = {}
 for s in range(0, t-1):
     scene_indices[scenes[s]] = range(scene_start_indices[s], scene_start_indices[s+1])
 scene_indices[scenes[t-1]] = range(scene_start_indices[t-1], m)
 
-# TODO: Vær konsekvent på språk, velg bedre variabelnavn
-skuespillere = actors
-roller = roles
-mulige_roller = possible_actors 
-scener = scenes
-scener_indekser = scene_indices
+scene_sizes = [len(scene_indices[scenes[i]]) for i in range(0, len(scenes))]
 
-scene_storleik = [len(scener_indekser[scener[i]]) for i in range(0, len(scener))]
-
-# m er antall roller til sammen, n er antall skuespillere, t er antall scener
-m = len(roller)
-n = len(skuespillere)
-t = len(scener)
+# Matrix on same format as decision variable, R[i, j] = 1 if actor j can play role i
 R = {}
-# Lag matrise der [i, j] = 1 hvis skuepiller j kan spille rolle i
 for i in range(0, m):
     for j in range(0, n):
-        R[i, j] = int(skuespillere[j] in mulige_roller[roller[i]])
+        R[i, j] = int(actors[j] in possible_actors[roles[i]])
 
 
-# Formuler problem vha. PuLP
+## State binary LP
+# Decision variable
 x = LpVariable.dicts('Rollefordeling', 
                         [(i, j) for i in range(0, m)
                                 for j in range(0, n)],
                         0, 1, LpBinary)
-
 prob = LpProblem('RoleDistribution', LpMaximize) 
-# Legger til deler av formuleringen med den merkelige +=-indeksen
 
-# Maksimér sysselsetting, dvs. sum av alle x
+# Maximize number of people who have a role
 prob += lpSum(x[i, j] for i in range(0, m) for j in range(0, n))
-# Kun én rolle per pers
+# Only one role per person
 for j in range(0, n):
     prob += lpSum(x[i, j] for i in range(0, m)) <= 1
 
-# Kun én pers per rolle
+# Only one person per role
 for i in range(0, m):
     prob += lpSum(x[i, j] for j in range(0, n)) <= 1
 
-# En scene er enten fylt eller ikke
-scene_med = LpVariable.dicts('Scenevalg', range(0, t), 0, 1, LpBinary)
+# Each scene should either have all roles assigned, or none (meaning it is not included)
+scene_included = LpVariable.dicts('SceneChoice', range(0, t), 0, 1, LpBinary)
 for s in range(0, t):
-    scene_indekser = scener_indekser[scener[s]]
-    prob += lpSum(x[i, j] for i in scene_indekser for j in range(0, n)) == scene_med[s]*scene_storleik[s]
+    current_scene_indices = scene_indices[scenes[s]]
+    prob += lpSum(x[i, j] for i in current_scene_indices for j in range(0, n)) == scene_included[s]*scene_sizes[s]
 
-# Det er begrenset hvem som kan spille hvilke roller
+# Respect the excel sheet 
 for i in range(0, m):
     for j in range(0, n):
         prob += x[i, j] <= R[i, j]
 
 prob.solve()
-
 objective_value = int(value(prob.objective))
 
-# Print resultatene
 
-endelige_roller = {}
+## Print results
+# Make bold print possible
+BOLD = '\033[1m'
+REGULAR = '\033[0m'
+
+final_roles = {}
 for i in range(0, m):
     for j in range(0, n):
-        #print(f"x[i, j]: {x[i, j].varValue}, R[i, j]: {R[i, j]}")
         if x[i, j].varValue == 1:
-            endelige_roller[skuespillere[j]] = roller[i]
+            final_roles[actors[j]] = roles[i]
 
-endelige_scener = []
+final_scenes = []
 for s in range(0, t):
-    if scene_med[s].varValue == 1:
-     endelige_scener.append(scener[s])
+    if scene_included[s].varValue == 1:
+     final_scenes.append(scenes[s])
 
 print()
 print(f"Ferdig med rollefordeling. Har funnet roller til {objective_value} skuespillere.")
 print()
 
-for scene in endelige_scener:
-    print(f"Scenen {scene} er med")
+for scene in final_scenes:
+    print("Scenen " + BOLD + scene + REGULAR + " er med.")
 
 print()
-for rolle in endelige_roller:
-    print(f"{endelige_roller[rolle]} spilles av {rolle}")
+for rolle in final_roles:
+    print(BOLD + final_roles[rolle] + REGULAR + " spilles av " + BOLD + rolle + REGULAR  + ".")
 print()
-

@@ -9,7 +9,7 @@ Dette scriptet leser inn et excelark som inneholder informasjon om hva slags ske
 |    ...    |    ...    |      ...      |      ...      | ... |       ...     |
 | Sketsj t  | Rolle t   | Kan P1 ha Rt? | Kan P2 ha Rt? | ... | Kan Pn ha Rt? |
 
-Kolonnen helt til venstre er tom med mindre rollen er den første som inngår i en ny sketsj (dvs. alle roller som er del av samme sketsj må skrives etter hverandre). [Et eksempel](mulige_roller.xlsx) ligger sammen med koden for scriptet.
+Kolonnen helt til venstre er tom med mindre rollen er den første som inngår i en ny sketsj (dvs. alle roller som er del av samme sketsj må skrives etter hverandre). [Et eksempel](mulige_roller.xlsx) ligger sammen med koden for scriptet. Dette tabellformatet passer godt overens med en form for betinget formatering som viser om en person kan ha en rolle eller ikke vha. fargelegging eller lignende.
 
 ## Løsningsmetode
 Rollefordelingen løses som et lineært programmeringsproblem med binære beslutningsvariable, der målet er å maksimere antall personer som har noe å øve på, samtidig som ingen har mer enn én rolle, og alle roller i sketsjene som øves på er besatt.
