@@ -5,11 +5,16 @@
 # TODO: Renskriv koden, den er fullstendig uleselig. Beklager til alle som måtte
 #       kikke på det her. Jeg lover bot og bedring.
 
-
+import argparse
 from pulp import *
-import numpy as np
 import pandas as pd
 
+# Les argumenter scriptet er kalt med
+parser = argparse.ArgumentParser(description='Fordel roller på skuespillere')
+parser.add_argument('--filnavn', default='mulige_roller.xlsx',
+                            help='Navn på fil som inneholder mulige roller')
+args = parser.parse_args()
+filename = args.filnavn
 
 # Importer data fra excel-fil
 # Antar at fila har sketsjnavn i venstre kolonne, tilhørende roller i kolonna til
